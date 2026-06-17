@@ -1,0 +1,364 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timers LOOP</title>
+    <!-- We use Tailwind CSS via CDN for rapid, clean, and responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom animation for the ringing state to alert the user */
+        @keyframes pulse-alarm {
+            0%, 100% { background-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { background-color: #f87171; box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        }
+        .btn-ringing {
+            animation: pulse-alarm 1.5s infinite;
+        }
+        
+        /* Smooth transitions for UI elements */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- App Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Timers LOOP
+            </h1>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        
+        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD (Builder / Management)   -->
+        <!-- ========================================== -->
+        <div id="dashboard-view" class="fade-in grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Column 1: Manage Timers -->
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">Mes Minuteurs</h2>
+                    <button onclick="openTimerModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-4 py-2 rounded-lg font-semibold transition-colors text-sm">
+                        + Créer
+                    </button>
+                </div>
+                <!-- List container for timers -->
+                <div id="timers-list" class="flex-1 overflow-y-auto space-y-3">
+                    <!-- Timers will be injected here by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Column 2: Manage Loops -->
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">Mes Boucles</h2>
+                    <button onclick="createNewLoop()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition-colors text-sm">
+                        + Nouvelle
+                    </button>
+                </div>
+                <!-- List container for loops -->
+                <div id="loops-list" class="flex-1 overflow-y-auto space-y-4">
+                    <!-- Loops will be injected here by JavaScript -->
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: RUNNER (Active Loop Execution)     -->
+        <!-- ========================================== -->
+        <div id="runner-view" class="hidden fade-in max-w-2xl mx-auto">
+            
+            <!-- Navigation back to dashboard -->
+            <button onclick="exitRunner()" class="mb-6 text-slate-500 hover:text-slate-800 flex items-center gap-2 font-medium transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Retour
+            </button>
+
+            <!-- Main Runner Card -->
+            <div class="bg-white p-6 md:p-12 rounded-3xl shadow-lg border border-slate-100 text-center relative overflow-hidden">
+                <h2 id="runner-loop-name" class="text-2xl font-bold text-slate-600 mb-2">Nom de la boucle</h2>
+                <h3 id="runner-timer-name" class="text-lg text-slate-400 mb-8 font-medium">Timer actuel</h3>
+                
+                <!-- Huge Time Display -->
+                <!-- Removed overflow-hidden, adjusted text responsiveness and added whitespace-nowrap to prevent line breaks -->
+                <div class="w-full mb-10 md:mb-12 flex justify-center">
+                    <div id="runner-time-display" class="text-5xl sm:text-6xl md:text-8xl font-black text-slate-800 font-mono tabular-nums whitespace-nowrap">
+                        00:00:00
+                    </div>
+                </div>
+
+                <!-- Controls: Start & Stop -->
+                <div class="flex justify-center gap-4 md:gap-6">
+                    <button id="btn-start" onclick="handleStart()" class="w-28 md:w-32 py-4 rounded-xl font-bold text-lg text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 shadow-md">
+                        Start
+                    </button>
+                    <button id="btn-stop" onclick="handleStop()" class="w-28 md:w-32 py-4 rounded-xl font-bold text-lg text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 shadow-md">
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sequence visualizer (Upcoming timers) -->
+            <div id="runner-sequence-container" class="mt-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Séquence</h4>
+                <ul id="runner-sequence-list" class="space-y-2">
+                    <!-- Sequence items injected by JS -->
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAL: Create / Edit Timer                 -->
+    <!-- ========================================== -->
+    <div id="timer-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center hidden z-40 p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl fade-in">
+            <h2 id="timer-modal-title" class="text-xl font-bold mb-4 text-slate-800">Nouveau Minuteur</h2>
+            
+            <form id="timer-form" onsubmit="saveTimer(event)">
+                <input type="hidden" id="timer-id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Nom (Optionnel)</label>
+                    <input type="text" id="timer-name" placeholder="Ex: Étirement" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Heures</label>
+                        <input type="number" id="timer-h" min="0" max="99" value="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-center">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Minutes</label>
+                        <input type="number" id="timer-m" min="0" max="59" value="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-center">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Secondes</label>
+                        <input type="number" id="timer-s" min="0" max="59" value="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-center">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeTimerModal()" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg font-medium transition-colors">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- CUSTOM DIALOG MODAL (Alert/Confirm/Prompt) -->
+    <!-- ========================================== -->
+    <div id="dialog-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl fade-in text-center">
+            <h3 id="dialog-title" class="text-xl font-bold mb-2 text-slate-800">Titre</h3>
+            <p id="dialog-message" class="text-slate-600 mb-5 text-sm">Message</p>
+            
+            <input type="text" id="dialog-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg mb-5 hidden focus:ring-2 focus:ring-emerald-500 focus:outline-none text-center">
+            
+            <div class="flex justify-center gap-3">
+                <button id="dialog-btn-cancel" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors hidden">
+                    Annuler
+                </button>
+                <button id="dialog-btn-confirm" class="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg font-medium transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        
+        let timers = JSON.parse(localStorage.getItem('app_timers')) || [];
+        let loops = JSON.parse(localStorage.getItem('app_loops')) || [];
+
+        let runner = {
+            loop: null,           
+            sequence: [],         
+            currentIndex: 0,      
+            remainingSeconds: 0,  
+            intervalId: null,     
+            status: 'idle',       
+        };
+
+        let audioCtx = null;
+        let alarmInterval = null;
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function saveData() {
+            localStorage.setItem('app_timers', JSON.stringify(timers));
+            localStorage.setItem('app_loops', JSON.stringify(loops));
+        }
+
+        function formatTime(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function getTimerById(id) {
+            return timers.find(t => t.id === id);
+        }
+
+        // ==========================================
+        // CUSTOM DIALOG SYSTEM
+        // ==========================================
+        
+        const dialogConfig = { callback: null };
+
+        function showDialog(options) {
+            const modal = document.getElementById('dialog-modal');
+            const titleEl = document.getElementById('dialog-title');
+            const msgEl = document.getElementById('dialog-message');
+            const inputEl = document.getElementById('dialog-input');
+            const btnCancel = document.getElementById('dialog-btn-cancel');
+            const btnConfirm = document.getElementById('dialog-btn-confirm');
+
+            inputEl.classList.add('hidden');
+            btnCancel.classList.add('hidden');
+            inputEl.value = '';
+
+            titleEl.innerText = options.title || 'Attention';
+            msgEl.innerText = options.message || '';
+            dialogConfig.callback = options.onConfirm;
+
+            if (options.type === 'confirm') {
+                btnCancel.classList.remove('hidden');
+            } else if (options.type === 'prompt') {
+                btnCancel.classList.remove('hidden');
+                inputEl.classList.remove('hidden');
+                inputEl.value = options.defaultValue || '';
+                setTimeout(() => inputEl.focus(), 100);
+            }
+
+            btnConfirm.onclick = () => closeDialog(true, options.type === 'prompt' ? inputEl.value : null);
+            btnCancel.onclick = () => closeDialog(false);
+
+            inputEl.onkeyup = (e) => {
+                if (e.key === 'Enter') closeDialog(true, inputEl.value);
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeDialog(isConfirmed, inputValue = null) {
+            document.getElementById('dialog-modal').classList.add('hidden');
+            if (isConfirmed && dialogConfig.callback) {
+                dialogConfig.callback(inputValue);
+            }
+        }
+
+        // ==========================================
+        // UI RENDERING: DASHBOARD
+        // ==========================================
+
+        function renderTimers() {
+            const container = document.getElementById('timers-list');
+            container.innerHTML = '';
+
+            if (timers.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-center italic mt-4">Aucun minuteur. Créez-en un pour commencer.</p>';
+                return;
+            }
+
+            timers.forEach(timer => {
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-xl';
+                el.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-800">${timer.name || 'Sans nom'}</div>
+                        <div class="text-sm font-mono text-slate-500">${formatTime(timer.totalSeconds)}</div>
+                    </div>
+                    <div class="flex items-center gap-1 sm:gap-2">
+                        <button onclick="startSingleTimer('${timer.id}')" class="px-2 py-1 sm:px-3 sm:py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-xs sm:text-sm font-bold shadow-sm transition-colors" title="Jouer seul">
+                            ▶ Jouer
+                        </button>
+                        
+                        <button onclick="openTimerModal('${timer.id}')" class="p-2 text-slate-400 hover:text-blue-500 bg-white rounded-lg shadow-sm" title="Editer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button onclick="deleteTimer('${timer.id}')" class="p-2 text-slate-400 hover:text-rose-500 bg-white rounded-lg shadow-sm" title="Supprimer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function renderLoops() {
+            const container = document.getElementById('loops-list');
+            container.innerHTML = '';
+
+            if (loops.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-center italic mt-4">Aucune boucle. Créez-en une et ajoutez-y des minuteurs.</p>';
+                return;
+            }
+
+            loops.forEach(loop => {
+                const el = document.createElement('div');
+                el.className = 'p-4 bg-slate-50 border border-slate-200 rounded-xl';
+                
+                let optionsHtml = '<option value="" disabled selected>Ajouter un minuteur...</option>';
+                timers.forEach(t => {
+                    optionsHtml += `<option value="${t.id}">${t.name || 'Minuteur'} (${formatTime(t.totalSeconds)})</option>`;
+                });
+
+                let itemsHtml = '';
+                if (loop.timerIds.length === 0) {
+                    itemsHtml = '<p class="text-xs text-slate-400 italic mb-2">Boucle vide.</p>';
+                } else {
+                    itemsHtml = '<ul class="mb-3 space-y-1">';
+                    loop.timerIds.forEach((timerId, index) => {
+                        const t = getTimerById(timerId);
+                        if(t) {
+                            itemsHtml += `
+                                <li class="text-sm bg-white border border-slate-100 p-2 rounded flex justify-between items-center">
+                                    <span class="truncate"><span class="text-slate-400 mr-2">${index + 1}.</span>${t.name || 'Sans nom'} <span class="font-mono text-xs text-slate-400 ml-1">${formatTime(t.totalSeconds)}</span></span>
+                                    <button onclick="removeTimerFromLoop('${loop.id}', ${index})" class="text-rose-400 hover:text-rose-600 ml-2" title="Retirer">✕</button>
+                                </li>
+                            `;
+                        }
+                    });
+                    itemsHtml += '</ul>';
+                }
+
+                const canPlay = loop.timerIds.length > 0;
+
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-800 text-lg cursor-pointer hover:text-emerald-600" onclick="renameLoop('${loop.id}')" title="Cliquez pour renommer">
+                            ${loop.name || 'Boucle sans nom'} <span class="text-xs font-normal text-slate-400">✎</span>
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="startLoopRunner('${loop.id}')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors" ${canPlay ? '' : 'disabled'}>
+                                ▶ Jouer
+                            </button>
+                            <button onclick="deleteLoop('${loop.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 bg-white rounded-lg shadow-sm" title="Supprimer la boucle">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v
