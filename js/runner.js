@@ -59,7 +59,6 @@
                     this.loadCurrentTimer();
                     this.play(); 
                 }
-            }
             },
 
             stopEverything() {
