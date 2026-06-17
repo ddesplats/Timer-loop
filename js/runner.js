@@ -47,10 +47,19 @@
 
             acknowledgeAlarm() {
                 AudioService.stopAlarm();
-                // Passe au timer suivant (boucle à zéro si c'est le dernier)
-                this.state.currentIndex = (this.state.currentIndex + 1) % this.state.sequence.length;
-                this.loadCurrentTimer();
-                this.play(); // Redémarre automatiquement
+                // Distinction entre Timer seul (qui se met en pause après l'alarme)
+                // et Boucle (qui s'enchaîne automatiquement)
+                if (this.state.loopId === 'single') {
+                    this.state.status = 'idle'; // Prêt à être relancé, ne redémarre pas seul
+                    this.loadCurrentTimer();
+                    if (this.onTick) this.onTick(this.state); // Met à jour l'UI instantanément
+                } else {
+                    this.state.status = 'idle'; // Réinitialise le statut pour autoriser le play()
+                    this.state.currentIndex = (this.state.currentIndex + 1) % this.state.sequence.length;
+                    this.loadCurrentTimer();
+                    this.play(); 
+                }
+            }
             },
 
             stopEverything() {
