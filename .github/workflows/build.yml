@@ -47,7 +47,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps:https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site }}
+      url: ${{steps.deployment.outputs.page_url}}
     runs-on: ubuntu-latest
     needs: build # On attend que l'étape de build soit terminée avec succès
     
