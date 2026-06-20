@@ -5,6 +5,13 @@
          *******************************************************/
         const App = {
             init() {
+                // Enregistrement manuel du Service Worker pour la PWA
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('./sw.js').catch(err => {
+                        console.info("Info PWA : L'enregistrement du Service Worker a échoué. Si vous n'êtes pas encore sur GitHub Pages ou un environnement sécurisé HTTPS, c'est normal.", err);
+                    });
+                }
+                
                 Store.load();
                 UI.renderDashboard(Store.timers, Store.loops);
                 
