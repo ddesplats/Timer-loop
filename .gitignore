@@ -1,0 +1,12 @@
+/dist
+/node_modules
+/tmp
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# dotenv environment variable files
+.env
+.env.production
