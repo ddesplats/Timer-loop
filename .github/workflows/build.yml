@@ -33,7 +33,7 @@ jobs:
         run: npm install cheerio terser
 
       - name: 🚀 Lancer le script de build
-        run: node build.js
+        run: node ./builder/build.js
 
       - name: 🎛️ Configurer Pages
         uses: actions/configure-pages@v5
