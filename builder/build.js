@@ -24,7 +24,7 @@ async function build() {
   // Chemins d'entrée et de sortie
   const inputHtmlPath = path.join(APP_ROOT, 'index.html');
   const outputDir = path.join(APP_ROOT, 'dist');
-  const outputHtmlPath = path.join(outputDir, '../index.html');
+  const outputHtmlPath = path.join(outputDir, 'index.html');
 
   // Créer le dossier dist s'il n'existe pas
   if (!fs.existsSync(outputDir)) {
