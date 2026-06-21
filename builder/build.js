@@ -16,7 +16,8 @@ const cheerio = require('cheerio');
 const { minify } = require('terser');
 
 //Const
-const APP_ROOT = path.join(__dirname, '../');
+const APP_ROOT = path.join(__dirname, '../'); //Set the app root relatively to the path of this builder
+const pwaFiles = ['manifest.json', 'sw.js'];  //List files to put at the dist root
 
 //Build behavior
 async function build() {
@@ -33,11 +34,8 @@ async function build() {
   // ==========================================
   // 1. GESTION DES FICHIERS PWA (Manifest, SW, etc.)
   // ==========================================
-  // Liste des fichiers spécifiques à copier à la racine de dist
-  const pwaFiles = ['manifest.json', 'sw.js'];
-
   pwaFiles.forEach(fileName => {
-    const srcPath = path.join(__dirname, fileName);
+    const srcPath = path.join(APP_ROOT, fileName);
     const destPath = path.join(outputDir, fileName);
 
     if (fs.existsSync(srcPath)) {
@@ -47,7 +45,7 @@ async function build() {
   });
 
   // (Optionnel) Si tu as un dossier d'icônes pour ta PWA, tu peux aussi le copier ici
-  // const iconsDir = path.join(__dirname, 'icons');
+  // const iconsDir = path.join(APP_ROOT, 'icons');
   // if (fs.existsSync(iconsDir)) { ... logique pour copier le dossier ... }
 
 
@@ -66,7 +64,7 @@ async function build() {
     // Ignorer le service worker s'il est appelé via une balise script standard
     if (src === 'sw.js') return;
 
-    const jsFilePath = path.join(__dirname, src);
+    const jsFilePath = path.join(APP_ROOT, src);
     
     if (fs.existsSync(jsFilePath)) {
       combinedJs += fs.readFileSync(jsFilePath, 'utf-8') + '\n';
